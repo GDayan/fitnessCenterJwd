@@ -1,0 +1,27 @@
+
+—
+java:S1186%"€Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation.(‚“¶î
+U
+java:S1161!":Add the "@Override" annotation above this method signature(õ­¥Ûşÿÿÿÿ
+P
+java:S1161%":Add the "@Override" annotation above this method signature(‚“¶î
+W
+java:S34570"AFormat specifiers should be used instead of string concatenation.(“„µ
+2
+java:S6205;"Remove this redundant block.(×’Â 
+7
+java:S6205>"Remove this redundant block.(‚£×«ùÿÿÿÿ
+2
+java:S6205A"Remove this redundant block.(üØô
+\
+java:S3457H"AFormat specifiers should be used instead of string concatenation.(ÇáÖ«úÿÿÿÿ
+W
+java:S3457M"AFormat specifiers should be used instead of string concatenation.(“„µ
+a
+java:S11920"KDefine a constant instead of duplicating this literal "command = " 3 times.(“„µ
+M
+java:S26290"7Use the built-in formatting to construct this argument.(“„µ
+R
+java:S2629H"7Use the built-in formatting to construct this argument.(ÇáÖ«úÿÿÿÿ
+M
+java:S2629M"7Use the built-in formatting to construct this argument.(“„µ
