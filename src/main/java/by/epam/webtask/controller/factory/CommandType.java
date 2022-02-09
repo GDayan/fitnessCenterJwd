@@ -13,7 +13,9 @@ public enum CommandType {
     SHOW_REGISTRATION(new ShowRegistrationCommand()),
     SHOW_TRAINER(new ShowTrainerCommand()),
     SHOW_GUEST(new ShowGuestCommand()),
+    SHOW_CONTACTS(new ShowContactsCommand()),
     SHOW_PRICING(new ShowPricingCommand());
+
 
     private final Command command;
 

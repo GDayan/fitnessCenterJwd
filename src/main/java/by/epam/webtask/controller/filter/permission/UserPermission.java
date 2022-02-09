@@ -12,6 +12,7 @@ public enum UserPermission {
             CommandType.SHOW_PRICING.name(),
             CommandType.SHOW_TRAINER.name(),
             CommandType.SHOW_GUEST.name(),
+            CommandType.SHOW_CONTACTS.name(),
             CommandType.SHOW_REGISTRATION.name())),
     CLIENT(Set.of(CommandType.CHANGE_LANGUAGE.name(),
             CommandType.SHOW_TRAINER.name(),
@@ -26,6 +27,7 @@ public enum UserPermission {
             CommandType.REGISTRATION.name(),
             CommandType.SHOW_SIGN_IN.name(),
             CommandType.SIGN_IN.name(),
+            CommandType.SHOW_CONTACTS.name(),
             CommandType.SHOW_REGISTRATION.name(),
             CommandType.SHOW_GUEST.name(),
             CommandType.SHOW_PRICING.name()));

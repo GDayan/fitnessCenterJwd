@@ -1,13 +1,14 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="ctg" uri="customtags" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <c:set var="absolutePath">${pageContext.request.contextPath}</c:set>
 <c:choose>
     <c:when test="${not empty language}"> <fmt:setLocale value="${language}" scope="session"/></c:when>
     <c:when test="${empty language}"> <fmt:setLocale value="ru_RU"/></c:when>
 </c:choose>
-<fmt:setBundle basename="context/language"/>
+
+<fmt:setBundle basename="context.language"/>
 <fmt:message var="log" key="form.sign_in.login"/>
 <fmt:message var="pass" key="form.sign_in.password"/>
 <fmt:message var="errorMessage" key="error.login_or_password"/>

@@ -1,13 +1,23 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="ctg" uri="customtags" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="ctg" uri="customtags" %>
 <c:set var="absolutePath">${pageContext.request.contextPath}</c:set>
 <c:choose>
-  <c:when test="${not empty language}"> <fmt:setLocale value="${language}" scope="session"/></c:when>
-  <c:when test="${empty language}"> <fmt:setLocale value="${language = 'ru_RU'}" scope="session"/></c:when>
+    <c:when test="${not empty language}"> <fmt:setLocale value="${language}" scope="session"/></c:when>
+    <c:when test="${empty language}"> <fmt:setLocale value="ru_RU"/></c:when>
 </c:choose>
-<fmt:setBundle basename="context/language"/>
+
+<fmt:setBundle basename="context.language"/>
+<fmt:message key="pricing.name" var="pricing_name"/>
+<fmt:message key="pricing.contacts" var="contacts"/>
+<fmt:message key="pricing.language" var="lang"/>
+<fmt:message key="pricing.main" var="main"/>
+<fmt:message key="pricing.sign_in" var="sign_in"/>
+<fmt:message key="pricing.registration" var="registration"/>
+<fmt:message key="pricing.pricing" var="pricing"/>
+<fmt:message key="pricing.trainer" var="trainer"/>
+<fmt:message key="pricing.marketing" var="marketing"/>
 
 <html>
 <head>
@@ -15,35 +25,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
   <link href="CSS/styleGuest.css" rel="stylesheet">
-  <title>Guest</title>
+  <title>${pricing_name}</title>
 <body>
 
 <header class="p-3 bg-dark text-white">
-  <div class="container">
-    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-      <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
-        <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"/></svg>
-      </a>
-      <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-        <li><a href="/controller?command=SHOW_GUEST" class="nav-link px-2 text-white">Главное</a></li>
-        <li><a href="/controller?command=SHOW_PRICING" class="nav-link px-2 text-white">Цены</a></li>
-        <li><a href="/controller?command=SHOW_TRAINER" class="nav-link px-2 text-white">Тренеры</a></li>
-        <li><a href="#" class="nav-link px-2 text-white">Контакты</a></li>
-        <li><a href="#" class="nav-link px-2 text-white">О нас</a></li>
-      </ul>
-      <div class="text-end">
-        <a href="/controller?command=CHANGE_LANGUAGE"><button class="btn btn-outline-light" type="submit">En/Ru</button></a>
-        <a href="/controller?command=SHOW_REGISTRATION"><button type="button" class="btn btn-outline-light me-2">Регистрация</button></a>
-        <a href="/controller?command=SHOW_SIGN_IN"><button type="button" class="btn btn-warning">Войти</button></a>
-      </div>
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+            <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"/></svg>
+            </a>
+            <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                <li><a href="/controller?command=SHOW_GUEST" class="nav-link px-2 text-white">${main}</a></li>
+                <li><a href="/controller?command=SHOW_PRICING" class="nav-link px-2 text-white">${pricing}</a></li>
+                <li><a href="/controller?command=SHOW_TRAINER" class="nav-link px-2 text-white">${trainer}</a></li>
+                <li><a href="/controller?command=SHOW_CONTACTS" class="nav-link px-2 text-white">${contacts}</a></li>
+                <c:choose>
+                    <c:when test="${language eq 'ru_RU'}">
+                        <li class="nav-item">
+                            <a class="nav-link" href="${absolutePath}/controller?command=change_language&language=en_US">${lang}</a>
+                        </li>
+                    </c:when>
+                    <c:when test="${language eq 'en_US'}">
+                        <li class="nav-item">
+                            <a class="nav-link" href="${absolutePath}/controller?command=change_language&language=ru_RU">${lang}</a>
+                        </li>
+                    </c:when>
+                    <c:otherwise>
+                        <li class="nav-item">
+                            <a class="nav-link" href="${absolutePath}/controller?command=change_language&language=ru_RU">${lang}</a>
+                        </li>
+                    </c:otherwise>
+                </c:choose>
+            </ul>
+            <div class="text-end">
+                <a href="/controller?command=SHOW_REGISTRATION"><button type="button" class="btn btn-outline-light me-2">${registration}</button></a>
+                <a href="/controller?command=SHOW_SIGN_IN"><button type="button" class="btn btn-warning">${sign_in}</button></a>
+            </div>
+        </div>
     </div>
-  </div>
 </header>
 
 <div class="container marketing">
     <div class="pricing-header p-3 pb-md-4 mx-auto text-center">
-        <h1 class="display-4 fw-normal">Pricing</h1>
-        <p class="fs-5 text-muted">Quickly build an effective pricing table for your potential customers with this Bootstrap example. It’s built with default Bootstrap components and utilities with little customization.</p>
+        <h1 class="display-4 fw-normal">${marketing}</h1>
     </div>
 
     <main>
