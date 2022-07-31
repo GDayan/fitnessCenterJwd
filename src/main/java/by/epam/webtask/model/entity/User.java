@@ -1,200 +1,102 @@
 package by.epam.webtask.model.entity;
 
-public class User extends CustomEntity {
+public class User implements Entity {
+    private static final long serialVersionUID = -1557459159707295638L;
 
-    public enum UserRole {
-        ADMIN(1),
-        CLIENT(2),
-        TRAINER(3),
-        GUEST(4);
-
-        private final long roleId;
-
-        UserRole(long id) {
-            roleId = id;
-        }
-
-        public long getRoleId() {
-            return roleId;
-        }
-    }
-
-    public enum UserState {
-        ACTIVE(1),
-        BLOCKED(2);
-
-        private final long stateId;
-
-        UserState(long id) {
-            stateId = id;
-        }
-
-        public long getStateId() {
-            return stateId;
-        }
-    }
-
-    private long userId;
-    private String login;
-    private String password;
-    private UserRole role;
-    private String firstName;
-    private String lastName;
-    private int phoneNumber;
+    private Long id;
     private String email;
-    private UserState state;
+    private String password;
+    private String firstName;
+    private String secondName;
+    private UserRole role;
+    private UserStatus status;
+    private String description;
+    private String photoPath;
 
-    public User() {
-    }
-
-    public User(long userId, String firstName, String lastName, String login,
-                String password, String email, int phoneNumber, UserRole role, UserState state) {
-        this.userId = userId;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.login = login;
-        this.password = password;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.role = role;
-        this.state = state;
-    }
-
-    public User(String firstName, String lastName, String login,
-                String password, String email, int phoneNumber, UserRole role, UserState state) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.login = login;
-        this.password = password;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.role = role;
-        this.state = state;
-    }
-
-    public static class Builder {
-        private final User user = new User();
-
-        public Builder userId(long userId) {
-            user.userId = userId;
-            return this;
-        }
-
-        public Builder firstName(String firstName) {
-            user.firstName = firstName;
-            return this;
-        }
-
-        public Builder lastName(String lastName) {
-            user.lastName = lastName;
-            return this;
-        }
-
-        public Builder login(String login) {
-            user.login = login;
-            return this;
-        }
-
-        public Builder password(String password) {
-            user.password = password;
-            return this;
-        }
-
-        public Builder email(String email) {
-            user.email = email;
-            return this;
-        }
-
-        public Builder phoneNumber(int phoneNumber) {
-            user.phoneNumber = phoneNumber;
-            return this;
-        }
-
-        public Builder role(UserRole role) {
-            user.role = role;
-            return this;
-        }
-
-        public Builder state(UserState state) {
-            user.state = state;
-            return this;
-        }
-
-        public User build() {
-            return user;
-        }
-    }
-
-    public long getUserId() {
-        return userId;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public int getPhoneNumber() {
-        return phoneNumber;
+    public User(Builder builder) {
+        this.id = builder.id;
+        this.email = builder.email;
+        this.password = builder.password;
+        this.firstName = builder.firstName;
+        this.secondName = builder.secondName;
+        this.role = builder.role;
+        this.status = builder.status;
+        this.description = builder.description;
+        this.photoPath = builder.photoPath;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public UserState getState() {
-        return state;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public void setUserId(long userId) {
-        this.userId = userId;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
+    public String getPassword() {
+        return password;
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getSecondName() {
+        return secondName;
+    }
+
+    public void setSecondName(String secondName) {
+        this.secondName = secondName;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
     public void setRole(UserRole role) {
         this.role = role;
     }
 
-    public void setFirstName(String name) {
-        this.firstName = firstName;
+    public UserStatus getStatus() {
+        return status;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setStatus(UserStatus status) {
+        this.status = status;
     }
 
-    public void setPhoneNumber(int phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public Long getId() {
+        return id;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setState(UserState state) {
-        this.state = state;
+    public String getDescription() {
+        return description;
+    }
+
+    public User setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public String getPhotoPath() {
+        return photoPath;
+    }
+
+    public User setPhotoPath(String photoPath) {
+        this.photoPath = photoPath;
+        return this;
     }
 
     @Override
@@ -204,44 +106,100 @@ public class User extends CustomEntity {
 
         User user = (User) o;
 
-        if (userId != user.userId) return false;
-        if (login != null ? !login.equals(user.login) : user.login != null) return false;
-        if (password != null ? !password.equals(user.password) : user.password != null) return false;
+        if (id != null ? !id.equals(user.id) : user.id != null) return false;
+        if (!email.equals(user.email)) return false;
+        if (!password.equals(user.password)) return false;
+        if (!firstName.equals(user.firstName)) return false;
+        if (!secondName.equals(user.secondName)) return false;
         if (role != user.role) return false;
-        if (firstName != null ? !firstName.equals(user.firstName) : user.firstName != null) return false;
-        if (lastName != null ? !lastName.equals(user.lastName) : user.lastName != null) return false;
-        if (phoneNumber != user.phoneNumber) return false;
-        if (email != null ? !email.equals(user.email) : user.email != null) return false;
-        return state == user.state;
+        return status == user.status;
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (userId ^ (userId >>> 32));
-        result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
-        result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-        result = 31 * result + (login != null ? login.hashCode() : 0);
-        result = 31 * result + (password != null ? password.hashCode() : 0);
-        result = 31 * result + (email != null ? email.hashCode() : 0);
-        result = 31 * result + phoneNumber;
-        result = 31 * result + (role != null ? role.hashCode() : 0);
-        result = 31 * result + (state != null ? state.hashCode() : 0);
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + email.hashCode();
+        result = 31 * result + password.hashCode();
+        result = 31 * result + firstName.hashCode();
+        result = 31 * result + secondName.hashCode();
+        result = 31 * result + role.hashCode();
+        result = 31 * result + status.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("User{");
-        sb.append("userId=").append(userId);
-        sb.append(", firstName='").append(firstName).append('\'');
-        sb.append(", lastName='").append(lastName).append('\'');
-        sb.append(", login='").append(login).append('\'');
-        sb.append(", password='").append(password).append('\'');
+        sb.append("id=").append(id);
         sb.append(", email='").append(email).append('\'');
-        sb.append(", phoneNumber=").append(phoneNumber);
+        sb.append(", password='").append(password).append('\'');
+        sb.append(", firstName='").append(firstName).append('\'');
+        sb.append(", secondName='").append(secondName).append('\'');
         sb.append(", role=").append(role);
-        sb.append(", state=").append(state);
+        sb.append(", status=").append(status);
         sb.append('}');
         return sb.toString();
     }
+
+    public static class Builder {
+        private Long id;
+        private String email;
+        private String password;
+        private String firstName;
+        private String secondName;
+        private UserRole role;
+        private UserStatus status;
+        private String description;
+        private String photoPath;
+
+        public Builder setId(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder setEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder setPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public Builder setFirstName(String firstName) {
+            this.firstName = firstName;
+            return this;
+        }
+
+        public Builder setSecondName(String secondName) {
+            this.secondName = secondName;
+            return this;
+        }
+
+        public Builder setRole(UserRole role) {
+            this.role = role;
+            return this;
+        }
+
+        public Builder setStatus(UserStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder setDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder setPhotoPath(String photoPath) {
+            this.photoPath = photoPath;
+            return this;
+        }
+
+        public User build() {
+            return new User(this);
+        }
+    }
+
 }

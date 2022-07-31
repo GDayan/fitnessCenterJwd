@@ -4,357 +4,205 @@ import by.epam.webtask.exception.DaoException;
 import by.epam.webtask.model.dao.BaseDao;
 import by.epam.webtask.model.dao.UserDao;
 import by.epam.webtask.model.entity.User;
-import by.epam.webtask.model.mapper.impl.UserMapper;
-import by.epam.webtask.model.pool.CustomConnectionPool;
-import by.epam.webtask.model.pool.ProxyConnection;
-import org.apache.logging.log4j.Level;
+import by.epam.webtask.model.entity.UserRole;
+import by.epam.webtask.model.entity.UserStatus;
+import by.epam.webtask.model.pool.ConnectionPool;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
+import java.sql.Types;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static by.epam.webtask.model.mapper.impl.UserMapper.PASSWORD;
-import static by.epam.webtask.model.mapper.impl.UserMapper.USER_STATE;
 
 public class UserDaoImpl extends BaseDao<User> implements UserDao {
-    private static final Logger logger = LogManager.getLogger();
-    private static final String SQL_SELECT_ALL_USERS = """
-            SELECT usersId, name, surname, login, password, phoneNumber,
-                                         status, role FROM fitnesscentre.users""";
+    private static final Logger LOG = LogManager.getLogger(UserDaoImpl.class);
+    private static final String USER_TABLE_NAME = "user";
+    private static final String ID_FIELD_NAME = "id";
+    private static final String EMAIL_FIELD_NAME = "email";
+    private static final String PASSWORD_HASH_FIELD_NAME = "password_hash";
+    private static final String ACCOUNT_ROLE_FIELD_NAME = "account_role";
+    private static final String STATUS_FIELD_NAME = "status";
+    private static final String FIRST_NAME_FIELD_NAME = "first_name";
+    private static final String SECOND_NAME_FIELD_NAME = "second_name";
+    private static final String DESCRIPTION_FIELD_NAME = "description";
+    private static final String PHOTO_PATH_FIELD_NAME = "photo_path";
 
-    private static final String SQL_INSERT_NEW_USER = """ 
-            INSERT INTO users(first_name, last_name, login, user_password, email, phone,
-            state_id, role_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""";
 
-    private static final String SQL_SELECT_USER_BY_ID = """
-            SELECT user_id, first_name, last_name, login, user_password, email, phone, state, role FROM users
-            JOIN user_state ON user_state.state_id = users.state_id
-            JOIN user_role ON user_role.role_id = users.role_id
-            WHERE user_id = (?)""";
+    private static final List<String> USER_FIELDS = Arrays.asList(
+            ID_FIELD_NAME, EMAIL_FIELD_NAME, PASSWORD_HASH_FIELD_NAME, ACCOUNT_ROLE_FIELD_NAME, STATUS_FIELD_NAME,
+            FIRST_NAME_FIELD_NAME, SECOND_NAME_FIELD_NAME, DESCRIPTION_FIELD_NAME, PHOTO_PATH_FIELD_NAME
+    );
 
-    private static final String SQL_DELETE_USER_BY_ID = """
-            DELETE FROM users WHERE user_id = (?)""";
+    private static final String SELECT_ALL_USERS = "SELECT  user.id,  email, password_hash, account_role, status,\n" +
+            "first_name, second_name, description, photo_path\n" +
+            "FROM user\n" +
+            "JOIN user_role r on r.id = user.role_id\n" +
+            "JOIN user_status us on us.id = user.user_status_id\n" +
+            "ORDER BY second_name";
 
-    private static final String SQL_UPDATE_USER = """
-            UPDATE users SET first_name = (?), last_name = (?), login = (?), user_password = (?), email = (?), 
-            phone = (?), birthday = (?), discount_id = (?), state_id = (?), role_id = (?) 
-            WHERE user_id = (?)""";
 
-    public static final String SQL_SELECT_PASSWORD_BY_LOGIN = """
-            SELECT user_password FROM users WHERE login = (?) """;
+    private static final String SELECT_USERS_BY_ROLE = "SELECT user.id,  email, password_hash, account_role,\n" +
+            "status, first_name, second_name, description, photo_path\n" +
+            "FROM user\n" +
+            "JOIN user_role r on r.id = user.role_id\n" +
+            "JOIN user_status us on us.id = user.user_status_id\n" +
+            "WHERE account_role = ?";
 
-    private static final String SQL_SELECT_USER_BY_LOGIN = """
-            SELECT users.user_id, first_name, last_name, login, user_password, email, phone,
-            state, role_name FROM users
-            JOIN user_state ON user_state.state_id = users.state_id
-            JOIN user_role ON user_role.role_id = users.role_id WHERE login = (?)""";
+    private static final String SELECT_USER_BY_ID = "SELECT user.id,  email, password_hash, account_role,\n" +
+            "status, first_name, second_name, description, photo_path\n" +
+            "FROM user\n" +
+            "JOIN user_role r on r.id = user.role_id\n" +
+            "JOIN user_status us on us.id = user.user_status_id\n" +
+            "WHERE user.id = ?";
 
-    private static final String SQL_SELECT_USER_BY_PHONE_NUMBER = """
-            SELECT users.user_id, first_name, last_name, login, user_password, email, phone, 
-            state, role_name FROM users
-            JOIN user_state ON user_state.state_id = users.state_id
-            JOIN user_role ON user_role.role_id = users.role_id WHERE phone = (?)""";
+    private static final String SELECT_ACTIVE_TRAINERS = "SELECT user.id,  email, password_hash, account_role,\n" +
+            "status, first_name, second_name, description, photo_path\n" +
+            "FROM user\n" +
+            "JOIN user_role r on r.id = user.role_id\n" +
+            "JOIN user_status us on us.id = user.user_status_id\n" +
+            "WHERE account_role = 'trainer' AND status = 'active'";
 
-    private static final String SQL_SELECT_USER_BY_EMAIL = """
-            SELECT users.user_id, first_name, last_name, login, user_password, email, phone,
-            state, role_name FROM users
-            JOIN user_state ON user_state.state_id = users.state_id
-            JOIN user_role ON user_role.role_id = users.role_id WHERE email = (?)""";
+    private static final String SELECT_ACTIVE_CLIENTS = "SELECT user.id,  email, password_hash, account_role,\n" +
+            "status, first_name, second_name, description, photo_path\n" +
+            "FROM user\n" +
+            "JOIN user_role r on r.id = user.role_id\n" +
+            "JOIN user_status us on us.id = user.user_status_id\n" +
+            "WHERE (account_role = 'user' OR account_role = 'corporate_user' OR account_role = 'regular_user') " +
+            "      AND status = 'active'";
 
-    private static final String SQL_SELECT_USER_STATE_BY_ID = """
-            SELECT state FROM users JOIN user_state ON users.state_id = user_state.state_id
-            WHERE users.user_id = (?)""";
+    private static final String SELECT_USER_BY_EMAIL = "SELECT user.id,  email, password_hash, account_role,\n" +
+            "status, first_name, second_name, description, photo_path\n" +
+            "FROM user\n" +
+            "JOIN user_role r on r.id = user.role_id\n" +
+            "JOIN user_status us on us.id = user.user_status_id\n" +
+            "WHERE email = ?";
 
-    private static final String SQL_UPDATE_PASSWORD_BY_LOGIN = """
-            UPDATE users SET user_password = (?) WHERE login = (?)""";
+    private static final String INSERT_NEW_USER = "INSERT INTO user (id, email, password_hash, role_id,\n" +
+            "    user_status_id, first_name, second_name, description, photo_path)\n" +
+            "    VALUE (NULL, ?,?,\n" +
+            "        (SELECT id FROM user_role WHERE account_role=?),\n" +
+            "        (SELECT id FROM user_status WHERE status=?),\n" +
+            "        ?,?, ?, ?)";
 
-    private static final String SQL_UPDATE_USER_STATE_BY_LOGIN = """
-            UPDATE users SET state_id = (?) where login = (?)""";
 
-    private static final String SQL_UPDATE_USER_STATE_BY_ID = """
-            UPDATE users SET state_id = (?) WHERE user_id = (?)""";
+    private static final String UPDATE_USER_BY_ID = "UPDATE user\n" +
+            "    SET email = ?, password_hash = ?,\n" +
+            "    role_id = (SELECT id FROM user_role WHERE account_role = ?),\n" +
+            "    user_status_id = (SELECT id FROM user_status WHERE status = ?),\n" +
+            "    first_name = ?, second_name = ?, description = ?, photo_path = ?\n" +
+            "    WHERE user.id = ?";
 
-    private static final String SQL_SELECT_USER_BY_LOGIN_AND_PASSWORD = """
-            SELECT usersId, name, surname, login, password, phoneNumber, status, role FROM fitnesscentre.users
-            WHERE login = (?) AND user_password = (?)""";
+    private static final String UPDATE_USER_STATUS_BY_ID = "UPDATE user\n" +
+            "SET user_status_id = (SELECT id FROM user_status WHERE status = ?)\n" +
+            "WHERE user.id = ?";
 
-    @Override
-    public List<User> findAll() throws DaoException {
-        List<User> userList = new ArrayList<>();
-        try (ProxyConnection connection = (ProxyConnection) CustomConnectionPool.getInstance().getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL_USERS)) {
-            while (resultSet.next()) {
-                Optional<User> optionalUser = new UserMapper().mapRow(resultSet);
-                if (optionalUser.isPresent()) {
-                    userList.add(optionalUser.get());
-                }
-            }
-            logger.log(Level.INFO, "List: " + userList);
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        }
-        return userList;
+    private static final String UPDATE_USER_ROLE_BY_ID = "UPDATE user\n" +
+            "SET role_id = (SELECT id FROM user_role WHERE account_role = ?)\n" +
+            "WHERE user.id = ?";
+
+
+    UserDaoImpl(ConnectionPool pool) {
+        super(pool, LOG);
+        selectAllQuery = SELECT_ALL_USERS;
+        insertQuery = INSERT_NEW_USER;
+        selectByIdQuery = SELECT_USER_BY_ID;
+        updateQuery = UPDATE_USER_BY_ID;
     }
 
     @Override
-    public Optional<User> findEntityById(long id) throws DaoException {
-        PreparedStatement statement = null;
-        User user = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_USER_BY_ID);
-            statement.setLong(1, id);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                Optional<User> optionalUser = new UserMapper().mapRow(resultSet);
-                if (optionalUser.isPresent()) {
-                    user = optionalUser.get();
-                }
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return Optional.ofNullable(user);
+    protected String getTableName() {
+        return USER_TABLE_NAME;
     }
 
     @Override
-    public boolean delete(long id) throws DaoException {
-        PreparedStatement statement = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_DELETE_USER_BY_ID);
-            statement.setLong(1, id);
-            return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
+    protected List<String> getFields() {
+        return USER_FIELDS;
     }
 
     @Override
-    public boolean delete(User entity) throws DaoException {
-        PreparedStatement statement = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_DELETE_USER_BY_ID);
-            statement.setLong(1, entity.getUserId());
-            return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
+    protected void fillEntity(PreparedStatement statement, User entity) throws SQLException {
+        statement.setString(1, entity.getEmail());
+        statement.setString(2, entity.getPassword());
+        statement.setString(3, entity.getRole().name().toLowerCase());
+        statement.setString(4, entity.getStatus().name().toLowerCase());
+        statement.setString(5, entity.getFirstName());
+        statement.setString(6, entity.getSecondName());
+        if (entity.getDescription() == null) {
+            statement.setNull(7, Types.VARCHAR);
+        } else {
+            statement.setString(7, entity.getDescription());
         }
-    }
-
-    @Override
-    public boolean create(User entity) throws DaoException {
-        PreparedStatement statement = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_INSERT_NEW_USER);
-            statement.setString(1, entity.getFirstName());
-            statement.setString(2, entity.getLastName());
-            statement.setString(3, entity.getLogin());
-            statement.setString(4, entity.getPassword());
-            statement.setString(5, entity.getEmail());
-            statement.setInt(6, entity.getPhoneNumber());
-            statement.setLong(7, entity.getState().getStateId());
-            statement.setLong(8, entity.getRole().getRoleId());
-            logger.log(Level.INFO, "The new row: " + entity);
-            return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
+        if (entity.getPhotoPath() == null) {
+            statement.setNull(8, Types.VARCHAR);
+        } else {
+            statement.setString(8, entity.getPhotoPath());
         }
     }
 
     @Override
     public boolean update(User entity) throws DaoException {
-        PreparedStatement statement = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_UPDATE_USER);
-            statement.setString(1, entity.getFirstName());
-            statement.setString(2, entity.getLastName());
-            statement.setString(3, entity.getLogin());
-            statement.setString(4, entity.getPassword());
-            statement.setString(5, entity.getEmail());
-            statement.setInt(6, entity.getPhoneNumber());
-            statement.setLong(7, entity.getState().getStateId());
-            statement.setLong(8, entity.getRole().getRoleId());
-            statement.setLong(9, entity.getUserId());
-            return statement.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
+        int rows = executeUpdate(updateQuery, st -> {
+            fillEntity(st, entity);
+            st.setLong(9, entity.getId());
+        });
+        return rows > 0;
     }
 
     @Override
-    public Optional<String> findPasswordByLogin(String login) throws DaoException {
-        PreparedStatement statement = null;
-        Optional<String> password = Optional.empty();
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_PASSWORD_BY_LOGIN);
-            statement.setString(1, login);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                password = Optional.of(resultSet.getString(PASSWORD));
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return password;
+    public boolean updateStatus(UserStatus status, long id) throws DaoException {
+        int rows = executeUpdate(UPDATE_USER_STATUS_BY_ID, st -> {
+            st.setString(1, status.name().toLowerCase());
+            st.setLong(2, id);
+        });
+        return rows > 0;
     }
 
     @Override
-    public Optional<User> findUserByLogin(String login) throws DaoException {
-        PreparedStatement statement = null;
-        Optional<User> user = Optional.empty();
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_USER_BY_LOGIN);
-            statement.setString(1, login);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                user = new UserMapper().mapRow(resultSet);
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return user;
+    public boolean updateRole(UserRole role, long id) throws DaoException {
+        int rows = executeUpdate(UPDATE_USER_ROLE_BY_ID, st -> {
+            st.setString(1, role.name().toLowerCase());
+            st.setLong(2, id);
+        });
+        return rows > 0;
     }
 
     @Override
-    public Optional<User> findUserByPhoneNumber(int phone) throws DaoException {
-        PreparedStatement statement = null;
-        Optional<User> user = Optional.empty();
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_USER_BY_PHONE_NUMBER);
-            statement.setInt(1, phone);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                user = new UserMapper().mapRow(resultSet);
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return user;
+    public Optional<User> findByEmail(String email) throws DaoException {
+        return executePreparedForEntity(SELECT_USER_BY_EMAIL, this::extractResult,
+                st -> st.setString(1, email));
     }
 
     @Override
-    public Optional<User> findUserByEmail(String email) throws DaoException {
-        PreparedStatement statement = null;
-        Optional<User> user = Optional.empty();
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_USER_BY_EMAIL);
-            statement.setString(1, email);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                user = new UserMapper().mapRow(resultSet);
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return user;
+    public List<User> findActiveTrainers() throws DaoException {
+        return executeStatement(SELECT_ACTIVE_TRAINERS, this::extractResult);
     }
 
     @Override
-    public Optional<User.UserState> findStateById(long userId) throws DaoException {
-        PreparedStatement statement = null;
-        Optional<User.UserState> userState = Optional.empty();
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_USER_STATE_BY_ID);
-            statement.setLong(1, userId);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                userState = Optional.of(User.UserState.valueOf(resultSet.getString(USER_STATE)
-                        .trim().toUpperCase()));
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return userState;
+    public List<User> findActiveClients() throws DaoException {
+        return executeStatement(SELECT_ACTIVE_CLIENTS, this::extractResult);
     }
 
     @Override
-    public boolean updatePasswordByLogin(String password, String login) throws DaoException {
-        PreparedStatement statement = null;
+    protected User extractResult(ResultSet rs) throws DaoException {
         try {
-            statement = this.proxyConnection.prepareStatement(SQL_UPDATE_PASSWORD_BY_LOGIN);
-            statement.setString(1, password);
-            statement.setString(2, login);
-            return statement.executeUpdate() == 1;
+            return new User.Builder()
+                    .setId(rs.getLong(ID_FIELD_NAME))
+                    .setEmail(rs.getString(EMAIL_FIELD_NAME))
+                    .setPassword(rs.getString(PASSWORD_HASH_FIELD_NAME))
+                    .setFirstName(rs.getString(FIRST_NAME_FIELD_NAME))
+                    .setRole(UserRole.of(rs.getString(ACCOUNT_ROLE_FIELD_NAME)))
+                    .setSecondName(rs.getString(SECOND_NAME_FIELD_NAME))
+                    .setStatus(UserStatus.of(rs.getString(STATUS_FIELD_NAME)))
+                    .setDescription(rs.getString(DESCRIPTION_FIELD_NAME))
+                    .setPhotoPath(rs.getString(PHOTO_PATH_FIELD_NAME))
+                    .build();
         } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
+            throw new DaoException("Unable to extract user", e);
         }
-    }
-
-    @Override
-    public boolean updateUserStateByLogin(User.UserState state, String login) throws DaoException {
-        PreparedStatement statement = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_UPDATE_USER_STATE_BY_LOGIN);
-            statement.setLong(1, state.getStateId());
-            statement.setString(2, login);
-            return statement.executeUpdate() == 1;
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-    }
-
-    @Override
-    public boolean updateUserState(long userId, long stateId) throws DaoException {
-        PreparedStatement statement = null;
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_UPDATE_USER_STATE_BY_ID);
-            statement.setLong(1, stateId);
-            statement.setLong(2, userId);
-            return statement.executeUpdate() == 1;
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-    }
-
-    @Override
-    public Optional<User> findUserByLoginAndPassword(String login, String password) throws DaoException {
-        PreparedStatement statement = null;
-        Optional<User> user = Optional.empty();
-        try {
-            statement = this.proxyConnection.prepareStatement(SQL_SELECT_USER_BY_LOGIN_AND_PASSWORD);
-            statement.setString(1, login);
-            statement.setString(2, password);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                user = new UserMapper().mapRow(resultSet);
-            }
-        } catch (SQLException e) {
-            throw new DaoException(e);
-        } finally {
-            close(statement);
-        }
-        return user;
     }
 }

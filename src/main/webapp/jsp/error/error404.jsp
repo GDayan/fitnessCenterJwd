@@ -1,24 +1,12 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: даян
-  Date: 28.01.2022
-  Time: 15:02
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page isErrorPage="true" contentType="text/html;charset=UTF-8" language="java" %>
-<hr>
+<html>
 <head>
-    <title>Error 404</title>
+    <title>Error</title>
+    <link href="${pageContext.request.contextPath}/style/style.css" type="text/css" rel="stylesheet">
 </head>
-<br>
-Request From -> ${pageContext.errorData.requestURI}
-<hr/>
-Exception -> ${pageContext.exception}
-<hr/>
-Exception Status -> ${pageContext.errorData.statusCode}
-<hr/>
-Servlet Name -> ${pageContext.errorData.servletName}
-<hr/>
-<a href="${pageContext.request.contextPath}/index.jsp">backToStartPage</a>
+<body class="error">
+<a href="${pageContext.request.contextPath}/controller">
+    <img src="${pageContext.request.contextPath}/images/404.png">
+</a>
 </body>
 </html>

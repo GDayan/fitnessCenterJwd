@@ -1,56 +1,53 @@
 package by.epam.webtask.model.pool;
 
-import by.epam.webtask.exception.ConnectionPoolException;
-import org.apache.logging.log4j.Level;
+import by.epam.webtask.exception.DatabaseConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
 class ConnectionFactory {
-    private static final Logger logger = LogManager.getLogger();
-    private static final Properties properties = new Properties();
-    private static final String DATABASE_URL;
-    private static final String DATABASE_PROPERTIES_FILE_NAME = "data/database.properties";
-    private static final String DB_URL = "db.url";
-    protected static final int POOL_SIZE;
-    private static String fileProperties;
+    public static final String DB_URL_PROPERTY = "url";
+    private static final Logger LOG = LogManager.getLogger(ConnectionFactory.class);
+    private static final String DATABASE_CONFIG_PATH = "database/database.properties";
+    private static final String DB_URL;
+    private static final Properties databaseProperties;
 
     static {
-        try {
-            ClassLoader loader = ConnectionFactory.class.getClassLoader();
-            URL resource = loader.getResource(DATABASE_PROPERTIES_FILE_NAME);
-            if (resource != null) {
-                fileProperties = resource.getFile();
-            } else {
-                logger.log(Level.ERROR, "Resource is null! " + DATABASE_PROPERTIES_FILE_NAME);
-                throw new IllegalArgumentException("Resource is null! " + DATABASE_PROPERTIES_FILE_NAME);
+        try (InputStream is = ConnectionFactory.class.getClassLoader().getResourceAsStream(DATABASE_CONFIG_PATH)) {
+            if (is == null) {
+                LOG.fatal("Unable to find data base property file");
+                throw new RuntimeException("Unable to find data base property file");
             }
-            properties.load(new FileReader(fileProperties));
-            String driverName = (String) properties.get("db.driver");
-            POOL_SIZE = Integer.parseInt((String) properties.get("poolSize"));
-            Class.forName(driverName);
-        } catch (ClassNotFoundException | IOException e) {
-            logger.log(Level.FATAL, "File properties exception: " + fileProperties);
-            throw new RuntimeException("File properties exception." + e.getMessage());
+            databaseProperties = new Properties();
+            databaseProperties.load(is);
+            LOG.info("Data base property file loaded");
+            DB_URL = databaseProperties.getProperty(ConnectionFactory.DB_URL_PROPERTY);
+            if (DB_URL == null) {
+                LOG.fatal("Database url in configuration file is not correct");
+                throw new RuntimeException("Database configuration file is not correct");
+            }
+        } catch (IOException e) {
+            LOG.fatal("Unable to open data base property file", e);
+            throw new RuntimeException("Unable to open data base property file");
         }
-        DATABASE_URL = (String) properties.get(DB_URL);
     }
 
     private ConnectionFactory() {
     }
 
-    static Connection createConnection() throws ConnectionPoolException {
+    static ProxyConnection createProxyConnection() throws DatabaseConnectionException {
+        Connection connection;
         try {
-            return DriverManager.getConnection(DATABASE_URL, properties);
+            connection = DriverManager.getConnection(DB_URL, databaseProperties);
         } catch (SQLException e) {
-            throw new ConnectionPoolException("Connection is not received: " + e.getMessage());
+            throw new DatabaseConnectionException("Unable to create connection to database: " + DB_URL, e);
         }
+        return new ProxyConnection(connection);
     }
 }

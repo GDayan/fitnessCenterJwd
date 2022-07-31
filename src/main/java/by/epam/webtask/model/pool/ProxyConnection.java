@@ -1,36 +1,36 @@
 package by.epam.webtask.model.pool;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
 public class ProxyConnection implements Connection {
-    private static final Logger logger = LogManager.getLogger();
     private final Connection connection;
+    private LocalDateTime lastTakeDate;
 
     ProxyConnection(Connection connection) {
         this.connection = connection;
+        lastTakeDate = LocalDateTime.now();
     }
 
-    @Override
-    public void close() throws SQLException {
-        if (!this.getAutoCommit()) {
-            this.setAutoCommit(true);
-        }
-        CustomConnectionPool.getInstance().releaseConnection(this);
+    /**
+     * Gets the time when connection was released
+     *
+     * @return local date time
+     */
+    public LocalDateTime getLastTakeDate() {
+        return lastTakeDate;
     }
 
-    void reallyClose() {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            logger.log(Level.ERROR, "Database access error: " + e.getMessage());
-        }
+    /**
+     * Sets the time when connection was released
+     *
+     * @param lastTakeDate local date time
+     */
+    public void setLastTakeDate(LocalDateTime lastTakeDate) {
+        this.lastTakeDate = lastTakeDate;
     }
 
     @Override
@@ -54,13 +54,13 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-        connection.setAutoCommit(autoCommit);
+    public boolean getAutoCommit() throws SQLException {
+        return connection.getAutoCommit();
     }
 
     @Override
-    public boolean getAutoCommit() throws SQLException {
-        return connection.getAutoCommit();
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+        connection.setAutoCommit(autoCommit);
     }
 
     @Override
@@ -74,6 +74,16 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
+    public void close() {
+        ConnectionPoolManager.getInstance().releaseConnection(this);
+    }
+
+    void realClose() throws SQLException {
+        connection.close();
+    }
+
+
+    @Override
     public boolean isClosed() throws SQLException {
         return connection.isClosed();
     }
@@ -84,18 +94,13 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-        connection.setReadOnly(readOnly);
-    }
-
-    @Override
     public boolean isReadOnly() throws SQLException {
         return connection.isReadOnly();
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
-        connection.setCatalog(catalog);
+    public void setReadOnly(boolean readOnly) throws SQLException {
+        connection.setReadOnly(readOnly);
     }
 
     @Override
@@ -104,13 +109,18 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
-    public void setTransactionIsolation(int level) throws SQLException {
-        connection.setTransactionIsolation(level);
+    public void setCatalog(String catalog) throws SQLException {
+        connection.setCatalog(catalog);
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
         return connection.getTransactionIsolation();
+    }
+
+    @Override
+    public void setTransactionIsolation(int level) throws SQLException {
+        connection.setTransactionIsolation(level);
     }
 
     @Override
@@ -149,13 +159,13 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
-    public void setHoldability(int holdability) throws SQLException {
-        connection.setHoldability(holdability);
+    public int getHoldability() throws SQLException {
+        return connection.getHoldability();
     }
 
     @Override
-    public int getHoldability() throws SQLException {
-        return connection.getHoldability();
+    public void setHoldability(int holdability) throws SQLException {
+        connection.setHoldability(holdability);
     }
 
     @Override
@@ -239,11 +249,6 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        connection.setClientInfo(properties);
-    }
-
-    @Override
     public String getClientInfo(String name) throws SQLException {
         return connection.getClientInfo(name);
     }
@@ -251,6 +256,11 @@ public class ProxyConnection implements Connection {
     @Override
     public Properties getClientInfo() throws SQLException {
         return connection.getClientInfo();
+    }
+
+    @Override
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+        connection.setClientInfo(properties);
     }
 
     @Override
@@ -264,13 +274,13 @@ public class ProxyConnection implements Connection {
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
-        connection.setSchema(schema);
+    public String getSchema() throws SQLException {
+        return connection.getSchema();
     }
 
     @Override
-    public String getSchema() throws SQLException {
-        return connection.getSchema();
+    public void setSchema(String schema) throws SQLException {
+        connection.setSchema(schema);
     }
 
     @Override
@@ -286,36 +296,6 @@ public class ProxyConnection implements Connection {
     @Override
     public int getNetworkTimeout() throws SQLException {
         return connection.getNetworkTimeout();
-    }
-
-    @Override
-    public void beginRequest() throws SQLException {
-        connection.beginRequest();
-    }
-
-    @Override
-    public void endRequest() throws SQLException {
-        connection.endRequest();
-    }
-
-    @Override
-    public boolean setShardingKeyIfValid(ShardingKey shardingKey, ShardingKey superShardingKey, int timeout) throws SQLException {
-        return connection.setShardingKeyIfValid(shardingKey, superShardingKey, timeout);
-    }
-
-    @Override
-    public boolean setShardingKeyIfValid(ShardingKey shardingKey, int timeout) throws SQLException {
-        return connection.setShardingKeyIfValid(shardingKey, timeout);
-    }
-
-    @Override
-    public void setShardingKey(ShardingKey shardingKey, ShardingKey superShardingKey) throws SQLException {
-        connection.setShardingKey(shardingKey, superShardingKey);
-    }
-
-    @Override
-    public void setShardingKey(ShardingKey shardingKey) throws SQLException {
-        connection.setShardingKey(shardingKey);
     }
 
     @Override

@@ -1,9 +1,11 @@
 package by.epam.webtask.controller.command;
 
-import by.epam.webtask.controller.Router;
-import by.epam.webtask.exception.CommandException;
-import jakarta.servlet.http.HttpServletRequest;
-
 public interface Command {
-    Router execute(HttpServletRequest request) throws CommandException;
+    /**
+     * Executes command
+     *
+     * @param request request wrapped with CommandRequest
+     * @return CommandResponse containing the path and type of response
+     */
+    CommandResponse execute(CommandRequest request);
 }

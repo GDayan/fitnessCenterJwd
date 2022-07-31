@@ -2,25 +2,21 @@ package by.epam.webtask.model.dao;
 
 import by.epam.webtask.exception.DaoException;
 import by.epam.webtask.model.entity.User;
+import by.epam.webtask.model.entity.UserRole;
+import by.epam.webtask.model.entity.UserStatus;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface UserDao {
-    Optional<String> findPasswordByLogin(String login) throws DaoException;
+public interface UserDao extends EntityDao<User> {
+    boolean updateStatus(UserStatus status, long id) throws DaoException;
 
-    Optional<User> findUserByLogin(String login) throws DaoException;
+    Optional<User> findByEmail(String email) throws DaoException;
 
-    Optional<User> findUserByPhoneNumber(int phoneNumber) throws DaoException;
+    List<User> findActiveTrainers() throws DaoException;
 
-    Optional<User> findUserByEmail(String email) throws DaoException;
+    List<User> findActiveClients() throws DaoException;
 
-    Optional<User.UserState> findStateById(long userId) throws DaoException;
+    boolean updateRole(UserRole role, long id) throws DaoException;
 
-    boolean updatePasswordByLogin(String password, String login) throws DaoException;
-
-    boolean updateUserStateByLogin(User.UserState state, String login) throws DaoException;
-
-    boolean updateUserState(long userId, long stateId) throws DaoException;
-
-    Optional<User> findUserByLoginAndPassword(String login, String password) throws DaoException;
 }
